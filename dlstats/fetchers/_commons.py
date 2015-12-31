@@ -3,11 +3,13 @@
 import os
 import pymongo
 from pymongo import ReturnDocument
+from pymongo import UpdateOne, InsertOne
 from datetime import datetime
 import logging
 import pprint
 from collections import defaultdict, OrderedDict
 from copy import deepcopy
+import itertools
 
 from slugify import slugify
 
@@ -360,29 +362,27 @@ class Series(DlstatsCollection):
                                ('lastUpdate', self.last_update)])
 
     def process_series_data(self):
-        count = 0
-        while True:
-            try:
-                # append result from __next__ method in fetchers
-                # one iteration by serie
-                data = next(self.data_iterator)
-                self.series_list.append(data)
-            except StopIteration:
+        
+        for data in self.data_iterator:
+            if not data:
                 break
-            count += 1
-            if count > self.bulk_size:
+            
+            self.series_list.append(data)
+            if len(self.series_list) == self.bulk_size:
                 self.update_series_list()
-                count = 0
-        if count > 0:
+                self.series_list = []
+
+        # delta        
+        if len(self.series_list) > 0:
             self.update_series_list()
+        
+        self.series_list = []
 
     def slug(self, key):
         txt = "-".join([self.provider_name, self.dataset_code, key])
         return slugify(txt, word_boundary=False, save_order=True)
         
     def update_series_list(self):
-
-        #TODO: gestion erreur bulk (BulkWriteError)
 
         keys = [s['key'] for s in self.series_list]
 
@@ -393,28 +393,26 @@ class Series(DlstatsCollection):
 
         old_series = {s['key']:s for s in old_series}
         
-        bulk = self.fetcher.db[constants.COL_SERIES].initialize_ordered_bulk_op()
+        bulk = []
 
         for data in self.series_list:
             key = data['key']
             if not key in old_series:
                 bson = self.update_series(data,is_bulk=True)
-                bulk.insert(bson)
+                bulk.append(InsertOne(bson))
             else:
                 old_bson = old_series[key]
                 bson = self.update_series(data,
                                           old_bson=old_bson,
                                           is_bulk=True)                
-                bulk.find({'_id': old_bson['_id']}).update({'$set': bson})
-        
+                bulk.append(UpdateOne({'_id': old_bson['_id']}, {'$set': bson}))        
         try:
-            result = bulk.execute()
+            result = self.fetcher.db[constants.COL_SERIES].bulk_write(bulk)
         except pymongo.errors.BulkWriteError as err:
             logger.critical(str(err.details))
             pprint.pprint(err.details)
             raise
                  
-        self.series_list = []
         return result
             
     def update_series(self, bson, old_bson=None, is_bulk=False):
@@ -435,7 +433,8 @@ class Series(DlstatsCollection):
         col = self.fetcher.db[constants.COL_SERIES]
 
         if not old_bson:
-            bson['releaseDates'] = [last_update for v in bson['values']]
+            bson['releaseDates'] = list(itertools.repeat(last_update, len(bson['values'])))
+
             schemas.series_schema(bson)
 
             self.check_values_attributes_releasedates(bson)
