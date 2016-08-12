@@ -648,10 +648,10 @@ _DATA_ECB = {
         "dsd_id": DSD_ECB["dsd_id"],
         #"frequencies_supported": ["A", "D", "M", "Q", "W"]
     },
-    "series_accept": 8,
-    "series_reject_frequency": 2,
+    "series_accept": 10,
+    "series_reject_frequency": 0,
     "series_reject_empty": 0,
-    "series_all_values": 9130,
+    "series_all_values": 9195,
     "series_key_first": 'A.ARS.EUR.SP00.A',
     "series_key_last": 'Q.AUD.EUR.SP00.A',
     "series_sample": {
@@ -759,7 +759,7 @@ DATA_ECB_GENERIC["klass"] = "XMLGenericData_2_1_ECB"
 DATA_ECB_SPECIFIC = _DATA_ECB.copy()
 DATA_ECB_SPECIFIC["filepath"] = filepath("ecb", "ecb-data-specific-2.1.xml")
 DATA_ECB_SPECIFIC["klass"] = "XMLSpecificData_2_1_ECB"
-DATA_ECB_SPECIFIC["series_all_values"] = 9140
+DATA_ECB_SPECIFIC["series_all_values"] = 9205
 
 DATA_INSEE_GENERIC = _DATA_INSEE.copy()
 DATA_INSEE_GENERIC["filepath"] = filepath("insee", "insee-data-generic-2.1.xml")
