@@ -103,11 +103,11 @@ DATASETS = {
         'doc_href': 'http://data.imf.org/FSI',
         'previous_datasets': [],
     },
-    'RT': { 
-        'name': 'International Reserves Template',
-        'doc_href': 'http://data.imf.org/RT',
-        'previous_datasets': [],
-    },
+    #'RT': { 
+    #    'name': 'International Reserves Template',
+    #    'doc_href': 'http://data.imf.org/RT',
+    #    'previous_datasets': [],
+    #},
     'FAS': { 
         'name': 'Financial Access Survey',
         'doc_href': 'http://data.imf.org/FAS',
@@ -548,26 +548,26 @@ CATEGORIES = [
         ],
         "metadata": {}
     },
-    {
-        "provider_name": "IMF",
-        "category_code": "RT",
-        "name": DATASETS["RT"]["name"],
-        "position": 12,
-        "parent": None,
-        "all_parents": [],
-        "doc_href": None,
-        "datasets": [
-            {
-                "dataset_code": "RT",
-                "name": DATASETS["RT"]["name"], 
-                "last_update": None,                 
-                "metadata": {
-                    "doc_href": DATASETS["RT"]["doc_href"]
-                }
-            },
-        ],
-        "metadata": {}
-    },
+    #{
+    #    "provider_name": "IMF",
+    #    "category_code": "RT",
+    #    "name": DATASETS["RT"]["name"],
+    #    "position": 12,
+    #    "parent": None,
+    #    "all_parents": [],
+    #    "doc_href": None,
+    #    "datasets": [
+    #        {
+    #            "dataset_code": "RT",
+    #            "name": DATASETS["RT"]["name"], 
+    #            "last_update": None,                 
+    #            "metadata": {
+    #                "doc_href": DATASETS["RT"]["doc_href"]
+    #            }
+    #        },
+    #    ],
+    #    "metadata": {}
+    #},
     {
         "provider_name": "IMF",
         "category_code": "WoRLD",
@@ -968,7 +968,10 @@ class IMF_JSON_Data(SeriesIterator):
             
             if self.current_dataset_code != self.dataset_code:
                 year = int(self.current_dataset_code.split(self.dataset_code)[1][:4])
-                month = int(self.current_dataset_code.split(self.dataset_code)[1][-2:])
+                try:
+                    month = int(self.current_dataset_code.split(self.dataset_code)[1][-2:])
+                except ValueError:
+                    month = 1
                 self.previous_last_update = clean_datetime(datetime(year, month, 1))
             else:
                 self.previous_last_update = None
