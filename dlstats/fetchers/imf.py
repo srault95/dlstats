@@ -859,6 +859,9 @@ class IMF_JSON_Data(SeriesIterator):
             #response = requests.get(url, params=params, stream=True, allow_redirects=False)
             
             logger.info("download url[%s] - filepath[%s] - status_code[%s]" %  (response.url, filepath, response.status_code))
+            
+            if response.status_code >= 400:
+                return
     
             response.raise_for_status()
     
@@ -972,6 +975,8 @@ class IMF_JSON_Data(SeriesIterator):
                     month = int(self.current_dataset_code.split(self.dataset_code)[1][-2:])
                 except ValueError:
                     month = 1
+                if month <= 0 or month > 12:
+                    month = 1
                 self.previous_last_update = clean_datetime(datetime(year, month, 1))
             else:
                 self.previous_last_update = None
@@ -1008,6 +1013,10 @@ class IMF_JSON_Data(SeriesIterator):
 
             url = "%s/%s" % (self._get_url_data(), key)
             json_data = self.download_json(url)
+            
+            if not json_data:
+                logger.warning("no data for dataset[%s] - url[%s]" % (self.dataset_code, url))
+                continue
 
             if not "Series" in json_data["CompactData"]["DataSet"]:
                 logger.warning("no series for url[%s]" % url)
